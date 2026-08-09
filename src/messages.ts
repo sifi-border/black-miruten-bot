@@ -16,6 +16,11 @@ export const messages = {
     registrationFailed: "コマンド登録に失敗しました:",
   },
 
+  interactionReceived: {
+    log: (commandName: string, userTag: string, guildId: string | null) =>
+      `[${commandName}] ${userTag} が実行しました (guild: ${guildId ?? "DM"})`,
+  },
+
   interactionError: {
     log: (commandName: string) => `[${commandName}] コマンド実行中にエラーが発生しました:`,
     reply: "コマンドの実行中にエラーが発生しました。",

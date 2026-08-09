@@ -26,6 +26,14 @@ client.on(Events.InteractionCreate, async (interaction) => {
   const command = commands.get(interaction.commandName);
   if (!command) return;
 
+  console.info(
+    messages.interactionReceived.log(
+      interaction.commandName,
+      interaction.user.tag,
+      interaction.guildId,
+    ),
+  );
+
   try {
     await command.execute(interaction);
   } catch (error) {
