@@ -44,4 +44,9 @@ export const messages = {
   images: {
     defaultLabel: "デフォルト",
   },
+
+  health: {
+    listening: (port: number) => `ヘルスチェックサーバーがポート${port}で待受を開始しました`,
+    startError: "ヘルスチェックサーバーの起動に失敗しました:",
+  },
 } as const;

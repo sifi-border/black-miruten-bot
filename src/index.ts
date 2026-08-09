@@ -1,8 +1,11 @@
 import "dotenv/config";
 import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { startHealthServer } from "./health";
 import { loadCommands } from "./loadCommands";
 import { messages } from "./messages";
 import type { SlashCommand } from "./types";
+
+startHealthServer();
 
 const token = process.env.DISCORD_TOKEN;
 if (!token) {
