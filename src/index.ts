@@ -1,0 +1,46 @@
+import "dotenv/config";
+import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import { loadCommands } from "./loadCommands";
+import { messages } from "./messages";
+import type { SlashCommand } from "./types";
+
+const token = process.env.DISCORD_TOKEN;
+if (!token) {
+  throw new Error(messages.env.missingDiscordToken);
+}
+
+const commands = new Collection<string, SlashCommand>();
+for (const command of loadCommands()) {
+  commands.set(command.data.name, command);
+}
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.once(Events.ClientReady, (readyClient) => {
+  console.log(`Logged in as ${readyClient.user.tag}`);
+});
+
+client.on(Events.InteractionCreate, async (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
+
+  const command = commands.get(interaction.commandName);
+  if (!command) return;
+
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(messages.interactionError.log(interaction.commandName), error);
+    const errorReply = {
+      content: messages.interactionError.reply,
+      ephemeral: true,
+    } as const;
+
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp(errorReply);
+    } else {
+      await interaction.reply(errorReply);
+    }
+  }
+});
+
+client.login(token);
