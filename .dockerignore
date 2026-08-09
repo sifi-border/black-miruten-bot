@@ -6,5 +6,6 @@ dist
 .gitignore
 README.md
 *.md
+screenshots
 **/*Zone.Identifier
 npm-debug.log

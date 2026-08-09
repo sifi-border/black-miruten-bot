@@ -1,6 +1,6 @@
-# miruten-say
+# black-miruten-bot
 
-`/miruten-say` スラッシュコマンドで、メッセージを罫線囲みの吹き出しに整形し、固定画像を添付して投稿するDiscord Botです。
+TypeScript + discord.js で実装した、複数のスラッシュコマンドをまとめて運用するDiscord Botです。
 
 ## セットアップ
 
@@ -79,7 +79,15 @@ docker compose down
 discord.jsのgateway接続はHTTPポートを必要としませんが、Northflankのようにポート監視でプロセスの生存確認を行うPaaSにデプロイする際に使うためのものです。
 ポートは環境変数 `PORT` から取得し(PaaS側が自動注入する想定)、未設定時は `8080` にフォールバックします。ボット本体のログイン処理・コマンド実行とは独立して動くため、どちらかの失敗がもう一方に影響することはありません。
 
-## 画像の差し替え
+## コマンド
+
+### `/miruten-say`
+
+メッセージを罫線囲みの吹き出しに整形し、固定画像を添付して投稿します。
+
+![/miruten-say の実行例](screenshots/miruten-say-example.png)
+
+#### 画像の差し替え
 
 `assets/images/character.png` はプレースホルダー画像です。実際に添付したいキャラクター画像に差し替えてください。
 画像のパスは `src/config/images.ts` で管理しており、コード中にはハードコードしていません。
@@ -92,15 +100,23 @@ export const BUBBLE_IMAGES: BubbleImageConfig[] = [
 ];
 ```
 
-## 将来の拡張(複数画像から選択・コマンド追加)
+画像を増やす場合は `BUBBLE_IMAGES` にエントリを追加し、`src/commands/miruten-say.ts` に `image` という文字列選択肢オプション(`addStringOption` + `addChoices`)を追加、
+`getImageById(選ばれたid)` を呼ぶように変更するだけで対応できます。
 
-- 画像を増やす場合は `BUBBLE_IMAGES` にエントリを追加し、`src/commands/miruten-say.ts` に `image` という文字列選択肢オプション(`addStringOption` + `addChoices`)を追加、
-  `getImageById(選ばれたid)` を呼ぶように変更するだけで対応できます。
+#### 罫線幅の計算ロジックについて
+
+- 表示幅は全角(Unicode East Asian Width の Wide/Fullwidth 相当)を2、それ以外を1、結合文字・異体字セレクタを0として計算します。
+- 上部罫線の `━` 本数は、メッセージの表示幅(複数行の場合は最大値)から2を引いた値(最低1本)としています。
+- 下部罫線の `ｖ` は先頭から6本目の `━` の位置に固定し、罫線幅がそれより短い極端なケースでは収まる範囲に丸めます。
+- この計算式は、仕様に示された例文 `知識って、財産だよね‼️` から実際の罫線幅を逆算し、一致するように検証済みです。
+
+## 新しいコマンドの追加方法
+
+- コマンドを追加する場合は `src/commands/` に新しいファイルを1つ追加するだけです。
 - 吹き出しテキスト生成ロジック(`src/utils/bubble.ts` の `buildBubbleText` / `getDisplayWidth`)はDiscord非依存の純粋関数として切り出してあるため、
   別の新しいコマンドからもそのままimportして再利用できます。
-- コマンドを追加する場合は `src/commands/` に新しいファイルを1つ追加するだけです(下記「コマンドファイルの形式」を参照)。
 
-## コマンドファイルの形式
+### コマンドファイルの形式
 
 各コマンドファイルは discord.js公式ガイドに準拠し、次の形式で `data` と `execute` をセットでdefault exportします。
 コマンドの説明文・返信メッセージなど日本語の文言は `src/messages.ts` に追加し、コード側からは変数として参照してください
@@ -121,13 +137,6 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
 export default { data, execute } satisfies SlashCommand;
 ```
-
-## 罫線幅の計算ロジックについて
-
-- 表示幅は全角(Unicode East Asian Width の Wide/Fullwidth 相当)を2、それ以外を1、結合文字・異体字セレクタを0として計算します。
-- 上部罫線の `━` 本数は、メッセージの表示幅(複数行の場合は最大値)から2を引いた値(最低1本)としています。
-- 下部罫線の `ｖ` は先頭から6本目の `━` の位置に固定し、罫線幅がそれより短い極端なケースでは収まる範囲に丸めます。
-- この計算式は、仕様に示された例文 `知識って、財産だよね‼️` から実際の罫線幅を逆算し、一致するように検証済みです。
 
 ## ディレクトリ構成
 
