@@ -11,11 +11,11 @@ cp .env.example .env
 
 `.env` に以下を設定してください。
 
-| 変数名 | 必須 | 説明 |
-|---|---|---|
-| `DISCORD_TOKEN` | ○ | BotのToken |
-| `DISCORD_CLIENT_ID` | ○ | アプリケーション(Client) ID。コマンド登録に使用 |
-| `DISCORD_GUILD_ID` | - | 指定するとそのギルドのみにコマンドを登録(反映が速く開発向き)。未指定ならグローバル登録 |
+| 変数名              | 必須 | 説明                                                                                   |
+| ------------------- | ---- | -------------------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`     | ○    | BotのToken                                                                             |
+| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                        |
+| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速く開発向き)。未指定ならグローバル登録 |
 
 ## コマンド登録
 
@@ -32,6 +32,15 @@ npm run deploy-commands
 ```bash
 npm run dev    # 開発時 (tsx watch)
 npm run build && npm start  # 本番向け (tsc → node)
+```
+
+## Lint / Format
+
+```bash
+npm run lint          # ESLint (typescript-eslint推奨ルール)
+npm run lint:fix      # 自動修正可能な指摘を修正
+npm run format        # Prettierで整形
+npm run format:check  # 整形が必要な箇所がないかCIなどで確認
 ```
 
 ## Dockerでの運用(推奨)

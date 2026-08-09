@@ -1,6 +1,10 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { AttachmentBuilder, SlashCommandBuilder, type ChatInputCommandInteraction } from "discord.js";
+import {
+  AttachmentBuilder,
+  SlashCommandBuilder,
+  type ChatInputCommandInteraction,
+} from "discord.js";
 import { buildBubbleText } from "../utils/bubble";
 import { DEFAULT_IMAGE_ID, getImageById, resolveImageAbsolutePath } from "../config/images";
 import { messages } from "../messages";

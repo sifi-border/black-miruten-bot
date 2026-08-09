@@ -37,7 +37,8 @@ export const messages = {
     messageTooLong:
       "メッセージが長すぎるため吹き出しを生成できませんでした。もう少し短くして再度お試しください。",
     imageLoadErrorLog: (path: string) => `[miruten-say] 画像の読み込みに失敗しました: ${path}`,
-    imageLoadErrorReply: "画像の読み込みに失敗したため投稿できませんでした。管理者に連絡してください。",
+    imageLoadErrorReply:
+      "画像の読み込みに失敗したため投稿できませんでした。管理者に連絡してください。",
   },
 
   images: {

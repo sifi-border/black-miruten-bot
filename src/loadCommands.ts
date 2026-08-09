@@ -7,12 +7,7 @@ const COMMANDS_DIR = path.join(__dirname, "commands");
 const COMMAND_FILE_PATTERN = /\.(ts|js)$/;
 
 function isSlashCommand(value: unknown): value is SlashCommand {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "data" in value &&
-    "execute" in value
-  );
+  return typeof value === "object" && value !== null && "data" in value && "execute" in value;
 }
 
 /**
@@ -28,7 +23,7 @@ export function loadCommands(): SlashCommand[] {
 
   const commands: SlashCommand[] = [];
   for (const file of files) {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- commands/配下を動的に読み込むため
     const imported = require(path.join(COMMANDS_DIR, file));
     const command: unknown = imported.default ?? imported;
 

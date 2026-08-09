@@ -22,7 +22,9 @@ async function main() {
     ? Routes.applicationGuildCommands(clientId!, guildId)
     : Routes.applicationCommands(clientId!);
 
-  console.log(guildId ? messages.deploy.registeringToGuild(guildId) : messages.deploy.registeringGlobally);
+  console.log(
+    guildId ? messages.deploy.registeringToGuild(guildId) : messages.deploy.registeringGlobally,
+  );
   console.log(messages.deploy.registrationTargets(commands.map((c) => c.data.name).join(", ")));
 
   const data = (await rest.put(route, { body })) as unknown[];
