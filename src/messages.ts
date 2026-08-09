@@ -13,7 +13,12 @@ export const messages = {
     registeringGlobally: "グローバルにコマンドを登録します...",
     registrationTargets: (commandNames: string) => `登録対象: ${commandNames}`,
     registrationComplete: (count: number) => `${count}個のコマンドを登録しました。`,
+    registrationCompleteForGuild: (count: number, guildId: string) =>
+      `${count}個のコマンドをギルド(${guildId})に登録しました。`,
     registrationFailed: "コマンド登録に失敗しました:",
+    registrationFailedForGuild: (guildId: string) => `ギルド(${guildId})への登録に失敗しました:`,
+    registrationSummaryFailed: (guildIds: string) =>
+      `一部のギルドで登録に失敗しました: ${guildIds}`,
   },
 
   interactionReceived: {
