@@ -75,6 +75,10 @@ export const messages = {
     skipped: "現在の問題をスキップしました。",
     stopAccepted: "イントロクイズを終了します。",
     voiceJoinFailed: "ボイスチャンネルへの接続に失敗しました。",
+    voiceConnectionStateChange: (guildId: string, oldStatus: string, newStatus: string) =>
+      `[introquiz] ギルド(${guildId})のVoiceConnection状態変化: ${oldStatus} -> ${newStatus}`,
+    voiceConnectionError: (guildId: string) =>
+      `[introquiz] ギルド(${guildId})のVoiceConnectionでエラーが発生しました:`,
     threadCreateFailed: "スレッドの作成に失敗しました。",
     startedWithClampedCount: (count: number) =>
       `登録されている問題数の都合上、${count}問で開始します。`,
