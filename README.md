@@ -27,16 +27,7 @@ cp .env.example .env
 
 Message Content Intentを有効化し忘れると、Bot自体は起動・接続できますが `/introquiz` の回答が常に正解と判定されなくなります(メッセージ本文が空文字として届くため)。
 
-### 問題データの投入(イントロクイズ機能を使う場合)
-
-イントロクイズの問題データはMongoDB(`MONGODB_URI`)に保存します。`/quiz-question` によるDiscord上での登録コマンドは未実装のため、現時点では以下のいずれかの方法で投入してください。
-
-```bash
-# questions.json (QuizQuestionの配列。idは省略可、省略時は自動採番) を一括投入
-npm run seed-questions -- ./questions.json
-```
-
-もしくは `mongosh` / MongoDB Compass などの標準ツールで `MONGODB_URI` に直接接続して操作しても構いません。データ形式は [docs/commands/introquiz.md](docs/commands/introquiz.md) を参照してください。
+問題データの投入方法(`npm run seed-questions` 等)は [docs/commands/introquiz.md](docs/commands/introquiz.md) を参照してください。
 
 ## コマンド登録
 
@@ -74,7 +65,7 @@ npm run format:check  # 整形が必要な箇所がないかCIなどで確認
 npm test  # Vitest (src/**/*.test.ts を実行)
 ```
 
-純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算、`src/introquiz/questionStore.ts` のID採番ロジックなど)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。`questionStore.ts` のCRUD部分はMongoDBへの実接続が必要なため、ユニットテストの対象外としています(実接続確認は手動、または`docker run`でMongoコンテナを一時起動して確認)。
+純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算など)や、リポジトリパターンで抽象化したロジック(`src/introquiz/questionStore.ts` のCRUD、`src/introquiz/questionRepository.ts` の `QuestionRepository` インターフェースをインメモリ実装に差し替えてテスト)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。MongoDBへの実接続を伴う挙動(接続文字列の解決、実際のクエリなど)はユニットテストの対象外です。
 
 ## Dockerでの運用(推奨)
 
@@ -161,7 +152,8 @@ src/
     judge.ts                normalizeAnswer/isCorrectAnswer(回答判定の正規化ロジック、Discord非依存)
     audio.ts                 YouTube音声取得(play-dl)・再生位置計算(resolvePlaybackStartSeconds)
     scoreboard.ts             スコアボードEmbed生成
-    questionStore.ts          問題データのMongoDB永続化(CRUD、現状Discordコマンドからは未使用)
+    questionStore.ts          問題データのCRUD(QuestionRepositoryを介した業務ロジック、現状Discordコマンドからは未使用)
+    questionRepository.ts     QuestionRepositoryインターフェースとMongoDB実装(createMongoQuestionRepository)
   config/
     images.ts            画像パスなどの設定
   utils/

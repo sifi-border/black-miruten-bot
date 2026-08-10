@@ -1,10 +1,8 @@
 import "dotenv/config";
 import { promises as fs } from "node:fs";
-import { MongoClient } from "mongodb";
-import { computeNextId, type QuizQuestion } from "./introquiz/questionStore";
+import { computeNextId } from "./introquiz/questionStore";
+import { createMongoQuestionRepository, type QuizQuestion } from "./introquiz/questionRepository";
 import { messages } from "./messages";
-
-const COLLECTION_NAME = "quizQuestions";
 
 type SeedInput = Omit<QuizQuestion, "id"> & { id?: string };
 
@@ -15,32 +13,24 @@ async function main() {
     process.exit(1);
   }
 
-  const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error(messages.env.missingMongodbUri);
-
   const raw = await fs.readFile(filePath, "utf-8");
   const inputs = JSON.parse(raw) as SeedInput[];
 
-  const client = new MongoClient(uri);
+  const repository = createMongoQuestionRepository();
   try {
-    await client.connect();
-    const collection = client.db().collection<QuizQuestion>(COLLECTION_NAME);
+    const existingIds = await repository.findAllIds();
 
-    const existingIds = (
-      await collection.find({}, { projection: { id: 1, _id: 0 } }).toArray()
-    ).map((question) => question.id);
-
-    const toInsert: QuizQuestion[] = [];
+    let insertedCount = 0;
     for (const input of inputs) {
       const id = input.id ?? computeNextId(existingIds);
       existingIds.push(id);
-      toInsert.push({ ...input, id });
+      await repository.insert({ ...input, id });
+      insertedCount += 1;
     }
 
-    const result = await collection.insertMany(toInsert);
-    console.log(messages.seedQuestions.inserted(result.insertedCount));
+    console.log(messages.seedQuestions.inserted(insertedCount));
   } finally {
-    await client.close();
+    await repository.close();
   }
 }
 
