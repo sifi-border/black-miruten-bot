@@ -53,12 +53,21 @@ client.on(Events.InteractionCreate, async (interaction) => {
       ephemeral: true,
     } as const;
 
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(errorReply);
-    } else {
-      await interaction.reply(errorReply);
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp(errorReply);
+      } else {
+        await interaction.reply(errorReply);
+      }
+    } catch (replyError) {
+      // エラー内容の返信自体が失敗しても(二重応答等)プロセス全体を落とさない
+      console.error(messages.interactionError.replyFailedLog(interaction.commandName), replyError);
     }
   }
+});
+
+client.on(Events.Error, (error) => {
+  console.error(messages.clientError.log, error);
 });
 
 client.login(token);

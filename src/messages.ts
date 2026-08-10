@@ -30,6 +30,11 @@ export const messages = {
   interactionError: {
     log: (commandName: string) => `[${commandName}] コマンド実行中にエラーが発生しました:`,
     reply: "コマンドの実行中にエラーが発生しました。",
+    replyFailedLog: (commandName: string) => `[${commandName}] エラー内容の返信にも失敗しました:`,
+  },
+
+  clientError: {
+    log: "Discordクライアントでエラーが発生しました:",
   },
 
   loadCommands: {
