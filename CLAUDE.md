@@ -30,6 +30,7 @@
 - `src/health.ts` が `GET /health` にHTTP 200を返す軽量サーバーを提供する(Node標準の `http` のみ、追加依存なし)。discord.jsのgateway接続はHTTPポート不要だが、Northflankのポート監視によるヘルスチェックに対応するために追加した。ポートは環境変数 `PORT`(未設定時 `8080`)。bot本体のログイン処理とは独立して動作し、どちらかの失敗がもう一方に影響しない。
 - コマンド登録(`src/deploy-commands.ts` → `npm run deploy-commands` / `node dist/deploy-commands.js`)はbot本体の起動から独立したスクリプト。Northflank上では別の「Job」として手動トリガーする運用(常時稼働中のBotを再起動せずにコマンド定義を反映するため)。
 - `DISCORD_GUILD_ID` はカンマ区切りで複数ギルドIDを指定でき、それぞれに順番に登録する(未設定ならグローバル登録)。サーバーを追加するたびにIDを追記してJobを再実行する運用。
+- イントロクイズの問題データ(`src/introquiz/questionStore.ts`)はNorthflankの **MongoDB Addon** に保存する(永続ボリューム上のJSONファイルではない。Volumeは1インスタンスに固定されHAが効かない制約があり、Northflankも極力Addon利用を推奨しているため採用)。接続文字列は環境変数 `MONGODB_URI`。ローカル/バルクでの問題投入は `npm run seed-questions -- <questions.jsonのパス>`(`src/seedQuestions.ts`)を使うか、`mongosh`/MongoDB Compassで接続文字列に直接繋いで操作する。
 
 ## コーディング規約
 

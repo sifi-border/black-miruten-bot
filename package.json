@@ -10,6 +10,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "deploy-commands": "tsx src/deploy-commands.ts",
+    "seed-questions": "tsx src/seedQuestions.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -23,6 +24,7 @@
     "dotenv": "^16.4.5",
     "ffmpeg-static": "^5.2.0",
     "libsodium-wrappers": "^0.7.15",
+    "mongodb": "^6.11.0",
     "opusscript": "^0.1.1",
     "play-dl": "^1.9.7"
   },
