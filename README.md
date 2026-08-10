@@ -86,7 +86,7 @@ docker compose logs -f
 docker compose down
 ```
 
-`Dockerfile` はマルチステージビルドになっており、ビルド用ステージ(`npm ci` + `tsc`)と実行用ステージ(本番依存のみ + `dist/` + `assets/`)を分けているため、実行イメージには開発用の依存関係やソースの `.ts` ファイルは含まれません。
+`Dockerfile` はマルチステージビルドになっており、ビルド用ステージ(`npm ci` + typecheck/lint/format:check/test/`tsc`)と実行用ステージ(本番依存のみ + `dist/` + `assets/`)を分けているため、実行イメージには開発用の依存関係やソースの `.ts` ファイルは含まれません。ビルド用ステージで検証コマンドが1つでも失敗すると `docker build` が失敗するため、Northflankへのデプロイも同じ仕組みでゲートされます(壊れたコードはそのままデプロイされません)。
 `.env` はイメージには焼き込まず、`docker-compose.yml` の `env_file` で実行時に読み込みます(トークンを含むイメージを誤って配布してしまうリスクを避けるため)。
 
 将来的に外部のホスティングサービスにデプロイする場合も、多くのPaaS(Railway, Fly.ioなど)はこの `Dockerfile` をそのまま利用してビルドできます。
