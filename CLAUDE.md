@@ -26,7 +26,7 @@
 ## デプロイ
 
 - デプロイ先: Northflank(Developer Sandbox, `nf-compute-20`)。
-- `Dockerfile` はマルチステージビルド(ビルド用ステージ + 本番依存関係のみの実行ステージ)。
+- `Dockerfile` はマルチステージビルド(ビルド用ステージ + 本番依存関係のみの実行ステージ)。ビルド用ステージでは `tsc`(typecheck)→ ESLint → Prettier(format:check)→ Vitest(test)→ `tsc -p tsconfig.build.json`(build)を順に実行しており、いずれか1つでも失敗すると `docker build` 自体が失敗する。Northflankのビルドもこの `Dockerfile` を使うため、これがそのままデプロイ前のCIゲートとして機能する(壊れたコードはイメージが作られずデプロイされない)。
 - `src/health.ts` が `GET /health` にHTTP 200を返す軽量サーバーを提供する(Node標準の `http` のみ、追加依存なし)。discord.jsのgateway接続はHTTPポート不要だが、Northflankのポート監視によるヘルスチェックに対応するために追加した。ポートは環境変数 `PORT`(未設定時 `8080`)。bot本体のログイン処理とは独立して動作し、どちらかの失敗がもう一方に影響しない。
 - コマンド登録(`src/deploy-commands.ts` → `npm run deploy-commands` / `node dist/deploy-commands.js`)はbot本体の起動から独立したスクリプト。Northflank上では別の「Job」として手動トリガーする運用(常時稼働中のBotを再起動せずにコマンド定義を反映するため)。
 - `DISCORD_GUILD_ID` はカンマ区切りで複数ギルドIDを指定でき、それぞれに順番に登録する(未設定ならグローバル登録)。サーバーを追加するたびにIDを追記してJobを再実行する運用。

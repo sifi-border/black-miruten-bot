@@ -5,9 +5,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY tsconfig.json tsconfig.build.json ./
+COPY tsconfig.json tsconfig.build.json vitest.config.ts eslint.config.mjs .prettierrc.json .prettierignore ./
 COPY src ./src
-RUN npm run build
+RUN npm run typecheck && npm run lint && npm run format:check && npm test && npm run build
 
 # ---- Runtime stage: 本番依存関係とビルド成果物のみを含む ----
 FROM node:20-bookworm-slim AS runner
