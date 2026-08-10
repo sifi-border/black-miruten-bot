@@ -46,6 +46,53 @@ export const messages = {
       "画像の読み込みに失敗したため投稿できませんでした。管理者に連絡してください。",
   },
 
+  introQuiz: {
+    commandDescription: "イントロクイズを開始・操作します。",
+    startDescription: "イントロクイズを開始します。",
+    skipDescription: "現在の問題をスキップします。",
+    stopDescription: "イントロクイズを終了します。",
+    scoreDescription: "現在のスコアを表示します。",
+    countOptionDescription: "出題数(デフォルト: 5問)",
+    playSecondsOptionDescription: "1問あたりの再生時間(秒、デフォルト: 8秒)",
+    answerSecondsOptionDescription: "回答受付時間(秒、デフォルト: 15秒)",
+    modeOptionDescription: "再生モード(デフォルト: イントロ)",
+    modeChoiceIntro: "イントロ",
+    modeChoiceRandom: "ランダム",
+    guildOnly: "このコマンドはサーバー内でのみ実行できます。",
+    mustRunInNormalChannel:
+      "このコマンドはスレッド内では実行できません。通常のチャンネルで実行してください。",
+    mustBeInVoiceChannel: "ボイスチャンネルに参加してから実行してください。",
+    sessionAlreadyActive: "このサーバーではすでにイントロクイズが進行中です。",
+    emptyQuestionPool:
+      "問題が登録されていません。`data/quiz-questions.json` に問題を追加してください。",
+    noActiveSession: "進行中のイントロクイズがありません。",
+    skipped: "現在の問題をスキップしました。",
+    stopAccepted: "イントロクイズを終了します。",
+    voiceJoinFailed: "ボイスチャンネルへの接続に失敗しました。",
+    threadCreateFailed: "スレッドの作成に失敗しました。",
+    startedWithClampedCount: (count: number) =>
+      `登録されている問題数の都合上、${count}問で開始します。`,
+    threadName: (startedAt: string) => `🎵イントロクイズ #${startedAt}`,
+    threadCreateReason: "イントロクイズ用スレッド",
+    startReply: (threadUrl: string) => `イントロクイズを開始しました! ${threadUrl}`,
+    questionStart: (number: number, total: number, playSeconds: number) =>
+      `第${number}問 / 全${total}問 スタート!(${playSeconds}秒間再生)`,
+    answerCorrect: (userId: string, title: string, artist: string) =>
+      `🎉 <@${userId}> 正解!\n正解: 「${title}」 / ${artist}`,
+    answerTimeout: (title: string, artist: string) =>
+      `⏱️ 正解者なし\n正解: 「${title}」 / ${artist}`,
+    voiceDisconnected: "ボイスチャンネルから切断されたため、イントロクイズを終了しました。",
+    unexpectedErrorLog: (guildId: string) =>
+      `[introquiz] ギルド(${guildId})でエラーが発生したためセッションを終了しました:`,
+    unexpectedError: "予期しないエラーが発生したため、イントロクイズを終了しました。",
+    scoreboardTitle: (current: number, total: number) =>
+      `📊 現在のスコア (${current}/${total}問終了)`,
+    finalScoreboardTitle: "🏁 最終結果",
+    scoreboardEmpty: "まだ得点はありません。",
+    scoreboardLine: (rank: number, userId: string, score: number) =>
+      `${rank}位  <@${userId}>  ${score}pt`,
+  },
+
   images: {
     defaultLabel: "デフォルト",
   },

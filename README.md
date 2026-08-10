@@ -11,11 +11,21 @@ cp .env.example .env
 
 `.env` に以下を設定してください。
 
-| 変数名              | 必須 | 説明                                                                                                                |
-| ------------------- | ---- | ------------------------------------------------------------------------------------------------------------------- |
-| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                          |
-| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                     |
-| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録 |
+| 変数名              | 必須 | 説明                                                                                                                                  |
+| ------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                                            |
+| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                                       |
+| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録                   |
+| `QUIZ_DATA_PATH`    | -    | イントロクイズの問題データ(JSON)の保存先パス。未設定時は `./data/quiz-questions.json`(コンテナ内では `/app/data/quiz-questions.json`) |
+
+### Discord Developer Portalの設定(イントロクイズ機能を使う場合)
+
+イントロクイズ機能(`/introquiz`)はVCでの音声再生とスレッド内メッセージの読み取りを行うため、通常のスラッシュコマンドに加えて以下の設定が必要です。
+
+- Bot設定の「Privileged Gateway Intents」で **Message Content Intent** を有効化する(スレッド内の回答メッセージを読み取るために必須)
+- Botの招待URL生成時に、既存の権限に加えて `Connect` / `Speak`(VC用)、`Create Public Threads` / `Send Messages in Threads`(スレッド用)を含める
+
+Message Content Intentを有効化し忘れると、Bot自体は起動・接続できますが `/introquiz` の回答が常に正解と判定されなくなります(メッセージ本文が空文字として届くため)。
 
 ## コマンド登録
 
@@ -46,6 +56,14 @@ npm run lint:fix      # 自動修正可能な指摘を修正
 npm run format        # Prettierで整形
 npm run format:check  # 整形が必要な箇所がないかCIなどで確認
 ```
+
+## テスト
+
+```bash
+npm test  # Vitest (src/**/*.test.ts を実行)
+```
+
+純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算、`src/introquiz/questionStore.ts` のCRUD/ID採番など)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。
 
 ## Dockerでの運用(推奨)
 
@@ -84,6 +102,7 @@ discord.jsのgateway接続はHTTPポートを必要としませんが、Northfla
 | コマンド       | 説明                                                                   | 詳細                                                         |
 | -------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------ |
 | `/miruten-say` | メッセージを罫線囲みの吹き出しに整形し、固定画像を添付して投稿します。 | [docs/commands/miruten-say.md](docs/commands/miruten-say.md) |
+| `/introquiz`   | YouTube音源を使ったイントロクイズを開始・進行します。                  | [docs/commands/introquiz.md](docs/commands/introquiz.md)     |
 
 ## 新しいコマンドの追加方法
 
@@ -124,14 +143,24 @@ src/
   types.ts              コマンドの型定義 (SlashCommand)
   commands/
     miruten-say.ts       /miruten-say のコマンド定義+実行ロジック
+    introquiz.ts          /introquiz のコマンド定義+実行ロジック(start/skip/stop/score)
+  introquiz/
+    session.ts             GameSessionの型・Map<guildId, GameSession>によるセッション管理・ゲームループ
+    judge.ts                normalizeAnswer/isCorrectAnswer(回答判定の正規化ロジック、Discord非依存)
+    audio.ts                 YouTube音声取得(play-dl)・再生位置計算(resolvePlaybackStartSeconds)
+    scoreboard.ts             スコアボードEmbed生成
+    questionStore.ts          問題データのJSONファイル永続化(CRUD、現状Discordコマンドからは未使用)
   config/
     images.ts            画像パスなどの設定
   utils/
     bubble.ts             吹き出しテキスト生成ロジック(表示幅計算・罫線組み立て、Discord非依存)
 assets/images/
   character.png         添付するプレースホルダー画像(要差し替え)
+data/
+  quiz-questions.json   イントロクイズの問題データ。gitignore対象、初回起動時に自動生成される
 docs/commands/
   miruten-say.md         /miruten-say の実行例・画像差し替え方法・罫線幅計算ロジック
+  introquiz.md            /introquiz の使い方・ゲームフロー・問題データの追加方法
 screenshots/            ドキュメント用のスクリーンショット(ビルドイメージには含めない)
 Dockerfile              マルチステージビルド(ビルド用/実行用)
 docker-compose.yml      常時起動用のcompose設定
