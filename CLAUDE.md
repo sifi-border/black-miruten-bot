@@ -9,7 +9,7 @@
 
   ```bash
   docker run --rm -v "$(pwd)":/app -w /app node:20-bookworm \
-    bash -lc "npm install && npm run typecheck && npm run lint && npm run format:check && npm run build"
+    bash -lc "npm install && npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
   ```
 
   本番相当の確認(コンテナ起動・ヘルスチェック等)は `docker compose build` / `docker compose up -d` を使う。
