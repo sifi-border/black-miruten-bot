@@ -1,5 +1,5 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
+import { MongoClient, type Collection } from "mongodb";
+import { messages } from "../messages";
 
 export interface QuizQuestion {
   id: string;
@@ -12,35 +12,27 @@ export interface QuizQuestion {
   answers: string[];
 }
 
-const DEFAULT_DATA_PATH = path.resolve(process.cwd(), "data", "quiz-questions.json");
+const COLLECTION_NAME = "quizQuestions";
 
-function resolveDataPath(): string {
-  return process.env.QUIZ_DATA_PATH ? path.resolve(process.env.QUIZ_DATA_PATH) : DEFAULT_DATA_PATH;
+let clientPromise: Promise<MongoClient> | null = null;
+
+function getMongoUri(): string {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error(messages.env.missingMongodbUri);
+  return uri;
 }
 
-async function ensureDataFile(filePath: string): Promise<void> {
-  await fs.mkdir(path.dirname(filePath), { recursive: true });
-  try {
-    await fs.access(filePath);
-  } catch {
-    await fs.writeFile(filePath, "[]", "utf-8");
+async function getCollection(): Promise<Collection<QuizQuestion>> {
+  if (!clientPromise) {
+    clientPromise = new MongoClient(getMongoUri()).connect();
   }
+  const client = await clientPromise;
+  return client.db().collection<QuizQuestion>(COLLECTION_NAME);
 }
 
-async function readAll(): Promise<QuizQuestion[]> {
-  const filePath = resolveDataPath();
-  await ensureDataFile(filePath);
-  const raw = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(raw) as QuizQuestion[];
-}
-
-async function writeAll(questions: QuizQuestion[]): Promise<void> {
-  await fs.writeFile(resolveDataPath(), JSON.stringify(questions, null, 2), "utf-8");
-}
-
-function nextId(questions: QuizQuestion[]): string {
-  const maxNumber = questions.reduce((max, question) => {
-    const match = /^q(\d+)$/.exec(question.id);
+export function computeNextId(existingIds: string[]): string {
+  const maxNumber = existingIds.reduce((max, id) => {
+    const match = /^q(\d+)$/.exec(id);
     if (!match) return max;
     const n = Number.parseInt(match[1], 10);
     return n > max ? n : max;
@@ -49,42 +41,40 @@ function nextId(questions: QuizQuestion[]): string {
 }
 
 export async function loadQuestionsByGuild(guildId: string): Promise<QuizQuestion[]> {
-  const questions = await readAll();
-  return questions.filter((question) => question.guildId === guildId);
+  const collection = await getCollection();
+  return collection.find({ guildId }, { projection: { _id: 0 } }).toArray();
 }
 
 export async function addQuestion(input: Omit<QuizQuestion, "id">): Promise<QuizQuestion> {
-  const questions = await readAll();
-  const question: QuizQuestion = { id: nextId(questions), ...input };
-  questions.push(question);
-  await writeAll(questions);
-  return question;
+  const collection = await getCollection();
+  const existingIds = (await collection.find({}, { projection: { id: 1, _id: 0 } }).toArray()).map(
+    (question) => question.id,
+  );
+
+  const id = computeNextId(existingIds);
+  // insertOneは渡したオブジェクトに_idを書き込んで返すため、戻り値用に別オブジェクトを用意する
+  await collection.insertOne({ id, ...input });
+  return { id, ...input };
 }
 
 export async function updateQuestion(
   id: string,
   patch: Partial<Omit<QuizQuestion, "id">>,
 ): Promise<QuizQuestion | null> {
-  const questions = await readAll();
-  const index = questions.findIndex((question) => question.id === id);
-  if (index === -1) return null;
+  const collection = await getCollection();
+  const result = await collection.updateOne({ id }, { $set: patch });
+  if (result.matchedCount === 0) return null;
 
-  const updated = { ...questions[index], ...patch };
-  questions[index] = updated;
-  await writeAll(questions);
-  return updated;
+  return collection.findOne({ id }, { projection: { _id: 0 } });
 }
 
 export async function removeQuestion(id: string): Promise<boolean> {
-  const questions = await readAll();
-  const next = questions.filter((question) => question.id !== id);
-  if (next.length === questions.length) return false;
-
-  await writeAll(next);
-  return true;
+  const collection = await getCollection();
+  const result = await collection.deleteOne({ id });
+  return result.deletedCount === 1;
 }
 
 export async function getQuestionById(id: string): Promise<QuizQuestion | null> {
-  const questions = await readAll();
-  return questions.find((question) => question.id === id) ?? null;
+  const collection = await getCollection();
+  return collection.findOne({ id }, { projection: { _id: 0 } });
 }

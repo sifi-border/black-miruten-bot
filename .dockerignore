@@ -8,6 +8,5 @@ README.md
 *.md
 docs
 screenshots
-data
 **/*Zone.Identifier
 npm-debug.log

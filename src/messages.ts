@@ -6,6 +6,7 @@ export const messages = {
   env: {
     missingDiscordToken: "環境変数 DISCORD_TOKEN が設定されていません。",
     missingDiscordClientId: "環境変数 DISCORD_CLIENT_ID が設定されていません。",
+    missingMongodbUri: "環境変数 MONGODB_URI が設定されていません。",
   },
 
   deploy: {
@@ -64,7 +65,7 @@ export const messages = {
     mustBeInVoiceChannel: "ボイスチャンネルに参加してから実行してください。",
     sessionAlreadyActive: "このサーバーではすでにイントロクイズが進行中です。",
     emptyQuestionPool:
-      "問題が登録されていません。`data/quiz-questions.json` に問題を追加してください。",
+      "問題が登録されていません。`npm run seed-questions` で問題を登録してください。",
     noActiveSession: "進行中のイントロクイズがありません。",
     skipped: "現在の問題をスキップしました。",
     stopAccepted: "イントロクイズを終了します。",
@@ -91,6 +92,12 @@ export const messages = {
     scoreboardEmpty: "まだ得点はありません。",
     scoreboardLine: (rank: number, userId: string, score: number) =>
       `${rank}位  <@${userId}>  ${score}pt`,
+  },
+
+  seedQuestions: {
+    usage: "使い方: npm run seed-questions -- <questions.jsonのパス>",
+    inserted: (count: number) => `${count}件の問題を登録しました。`,
+    failed: "問題の登録に失敗しました:",
   },
 
   images: {

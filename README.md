@@ -11,12 +11,12 @@ cp .env.example .env
 
 `.env` に以下を設定してください。
 
-| 変数名              | 必須 | 説明                                                                                                                                  |
-| ------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                                            |
-| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                                       |
-| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録                   |
-| `QUIZ_DATA_PATH`    | -    | イントロクイズの問題データ(JSON)の保存先パス。未設定時は `./data/quiz-questions.json`(コンテナ内では `/app/data/quiz-questions.json`) |
+| 変数名              | 必須 | 説明                                                                                                                                                                                      |
+| ------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                                                                                                |
+| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                                                                                           |
+| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録                                                                       |
+| `MONGODB_URI`       | ○\*  | イントロクイズの問題データを保存するMongoDBの接続文字列(`/introquiz`を使う場合は実質必須。ローカル開発ではDockerで一時的なMongoDBを立てるか、MongoDB Atlasの無料枠などを利用してください) |
 
 ### Discord Developer Portalの設定(イントロクイズ機能を使う場合)
 
@@ -26,6 +26,17 @@ cp .env.example .env
 - Botの招待URL生成時に、既存の権限に加えて `Connect` / `Speak`(VC用)、`Create Public Threads` / `Send Messages in Threads`(スレッド用)を含める
 
 Message Content Intentを有効化し忘れると、Bot自体は起動・接続できますが `/introquiz` の回答が常に正解と判定されなくなります(メッセージ本文が空文字として届くため)。
+
+### 問題データの投入(イントロクイズ機能を使う場合)
+
+イントロクイズの問題データはMongoDB(`MONGODB_URI`)に保存します。`/quiz-question` によるDiscord上での登録コマンドは未実装のため、現時点では以下のいずれかの方法で投入してください。
+
+```bash
+# questions.json (QuizQuestionの配列。idは省略可、省略時は自動採番) を一括投入
+npm run seed-questions -- ./questions.json
+```
+
+もしくは `mongosh` / MongoDB Compass などの標準ツールで `MONGODB_URI` に直接接続して操作しても構いません。データ形式は [docs/commands/introquiz.md](docs/commands/introquiz.md) を参照してください。
 
 ## コマンド登録
 
@@ -63,7 +74,7 @@ npm run format:check  # 整形が必要な箇所がないかCIなどで確認
 npm test  # Vitest (src/**/*.test.ts を実行)
 ```
 
-純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算、`src/introquiz/questionStore.ts` のCRUD/ID採番など)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。
+純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算、`src/introquiz/questionStore.ts` のID採番ロジックなど)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。`questionStore.ts` のCRUD部分はMongoDBへの実接続が必要なため、ユニットテストの対象外としています(実接続確認は手動、または`docker run`でMongoコンテナを一時起動して確認)。
 
 ## Dockerでの運用(推奨)
 
@@ -138,6 +149,7 @@ export default { data, execute } satisfies SlashCommand;
 src/
   index.ts              Bot起動・ログイン処理、interactionのディスパッチ
   deploy-commands.ts    スラッシュコマンドをDiscordに登録するスクリプト
+  seedQuestions.ts      イントロクイズの問題データをJSONファイルからMongoDBへ一括投入するスクリプト
   loadCommands.ts       commands/ 配下を自動走査してコマンドを収集する仕組み
   messages.ts           コマンド説明文・返信メッセージ・ログ文言を一元管理
   types.ts              コマンドの型定義 (SlashCommand)
@@ -149,15 +161,13 @@ src/
     judge.ts                normalizeAnswer/isCorrectAnswer(回答判定の正規化ロジック、Discord非依存)
     audio.ts                 YouTube音声取得(play-dl)・再生位置計算(resolvePlaybackStartSeconds)
     scoreboard.ts             スコアボードEmbed生成
-    questionStore.ts          問題データのJSONファイル永続化(CRUD、現状Discordコマンドからは未使用)
+    questionStore.ts          問題データのMongoDB永続化(CRUD、現状Discordコマンドからは未使用)
   config/
     images.ts            画像パスなどの設定
   utils/
     bubble.ts             吹き出しテキスト生成ロジック(表示幅計算・罫線組み立て、Discord非依存)
 assets/images/
   character.png         添付するプレースホルダー画像(要差し替え)
-data/
-  quiz-questions.json   イントロクイズの問題データ。gitignore対象、初回起動時に自動生成される
 docs/commands/
   miruten-say.md         /miruten-say の実行例・画像差し替え方法・罫線幅計算ロジック
   introquiz.md            /introquiz の使い方・ゲームフロー・問題データの追加方法
