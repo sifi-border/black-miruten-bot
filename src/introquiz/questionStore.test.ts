@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   addQuestion,
   getQuestionById,
-  loadAllQuestions,
+  loadQuestionsByGuild,
   removeQuestion,
   updateQuestion,
   type QuizQuestion,
@@ -24,8 +24,12 @@ afterEach(() => {
   process.env.QUIZ_DATA_PATH = originalDataPath;
 });
 
-function baseInput(): Omit<QuizQuestion, "id"> {
+const GUILD_A = "guild-a";
+const GUILD_B = "guild-b";
+
+function baseInput(guildId: string = GUILD_A): Omit<QuizQuestion, "id"> {
   return {
+    guildId,
     youtubeUrl: "https://www.youtube.com/watch?v=abc",
     startSeconds: 10,
     durationSeconds: 200,
@@ -37,7 +41,7 @@ function baseInput(): Omit<QuizQuestion, "id"> {
 
 describe("questionStore", () => {
   it("starts empty and creates the file on first read", async () => {
-    expect(await loadAllQuestions()).toEqual([]);
+    expect(await loadQuestionsByGuild(GUILD_A)).toEqual([]);
   });
 
   it("adds a question with an auto-numbered id", async () => {
@@ -45,7 +49,24 @@ describe("questionStore", () => {
     const second = await addQuestion(baseInput());
     expect(first.id).toBe("q001");
     expect(second.id).toBe("q002");
-    expect(await loadAllQuestions()).toHaveLength(2);
+    expect(await loadQuestionsByGuild(GUILD_A)).toHaveLength(2);
+  });
+
+  it("only returns questions belonging to the requested guild", async () => {
+    await addQuestion(baseInput(GUILD_A));
+    await addQuestion(baseInput(GUILD_B));
+    await addQuestion(baseInput(GUILD_A));
+
+    expect(await loadQuestionsByGuild(GUILD_A)).toHaveLength(2);
+    expect(await loadQuestionsByGuild(GUILD_B)).toHaveLength(1);
+    expect(await loadQuestionsByGuild("guild-with-no-questions")).toEqual([]);
+  });
+
+  it("keeps id numbering global across guilds (ids stay unique in the shared file)", async () => {
+    const first = await addQuestion(baseInput(GUILD_A));
+    const second = await addQuestion(baseInput(GUILD_B));
+    expect(first.id).toBe("q001");
+    expect(second.id).toBe("q002");
   });
 
   it("numbers new ids based on the current max, reusing a gap left by removal", async () => {

@@ -3,6 +3,7 @@ import path from "node:path";
 
 export interface QuizQuestion {
   id: string;
+  guildId: string;
   youtubeUrl: string;
   startSeconds: number;
   durationSeconds: number;
@@ -47,8 +48,9 @@ function nextId(questions: QuizQuestion[]): string {
   return `q${String(maxNumber + 1).padStart(3, "0")}`;
 }
 
-export async function loadAllQuestions(): Promise<QuizQuestion[]> {
-  return readAll();
+export async function loadQuestionsByGuild(guildId: string): Promise<QuizQuestion[]> {
+  const questions = await readAll();
+  return questions.filter((question) => question.guildId === guildId);
 }
 
 export async function addQuestion(input: Omit<QuizQuestion, "id">): Promise<QuizQuestion> {

@@ -5,6 +5,7 @@ import type { QuizQuestion } from "./questionStore";
 function baseQuestion(overrides: Partial<QuizQuestion> = {}): QuizQuestion {
   return {
     id: "q001",
+    guildId: "guild-a",
     youtubeUrl: "https://www.youtube.com/watch?v=abc",
     startSeconds: 30,
     durationSeconds: 240,

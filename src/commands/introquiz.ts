@@ -5,7 +5,7 @@ import {
   type GuildMember,
   type TextChannel,
 } from "discord.js";
-import { loadAllQuestions } from "../introquiz/questionStore";
+import { loadQuestionsByGuild } from "../introquiz/questionStore";
 import { buildScoreboardEmbed } from "../introquiz/scoreboard";
 import {
   getSession,
@@ -93,7 +93,7 @@ async function handleStart(interaction: ChatInputCommandInteraction): Promise<vo
     return;
   }
 
-  const allQuestions = await loadAllQuestions();
+  const allQuestions = await loadQuestionsByGuild(guildId);
   if (allQuestions.length === 0) {
     await interaction.reply({ content: messages.introQuiz.emptyQuestionPool, ephemeral: true });
     return;
