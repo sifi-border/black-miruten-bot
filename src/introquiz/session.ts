@@ -68,7 +68,7 @@ export async function startSession(params: StartSessionParams): Promise<GameSess
     adapterCreator: params.voiceChannel.guild.voiceAdapterCreator,
   });
 
-  // Ready状態に到達しない場合の原因切り分け用(UDP経由のハンドシェイクがどこで止まっているか等)
+  // Ready状態に到達しない場合の原因切り分け用(WebSocket/UDP経由のハンドシェイクがどこで止まっているか等)
   voiceConnection.on("stateChange", (oldState, newState) => {
     console.info(
       messages.introQuiz.voiceConnectionStateChange(guildId, oldState.status, newState.status),
@@ -76,6 +76,10 @@ export async function startSession(params: StartSessionParams): Promise<GameSess
   });
   voiceConnection.on("error", (error) => {
     console.error(messages.introQuiz.voiceConnectionError(guildId), error);
+  });
+  // stateChangeより詳細な内部ログ(WebSocketのclose code、UDP keep-aliveの失敗等が出ることがある)
+  voiceConnection.on("debug", (message) => {
+    console.debug(messages.introQuiz.voiceConnectionDebug(guildId, message));
   });
 
   try {

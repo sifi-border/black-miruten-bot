@@ -77,6 +77,8 @@ export const messages = {
     voiceJoinFailed: "ボイスチャンネルへの接続に失敗しました。",
     voiceConnectionStateChange: (guildId: string, oldStatus: string, newStatus: string) =>
       `[introquiz] ギルド(${guildId})のVoiceConnection状態変化: ${oldStatus} -> ${newStatus}`,
+    voiceConnectionDebug: (guildId: string, message: string) =>
+      `[introquiz] ギルド(${guildId})のVoiceConnection debug: ${message}`,
     voiceConnectionError: (guildId: string) =>
       `[introquiz] ギルド(${guildId})のVoiceConnectionでエラーが発生しました:`,
     threadCreateFailed: "スレッドの作成に失敗しました。",
