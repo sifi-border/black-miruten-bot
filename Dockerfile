@@ -1,5 +1,5 @@
 # ---- Build stage: TypeScriptをコンパイルする ----
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -10,7 +10,7 @@ COPY src ./src
 RUN npm run typecheck && npm run lint && npm run format:check && npm test && npm run build
 
 # ---- Runtime stage: 本番依存関係とビルド成果物のみを含む ----
-FROM node:20-bookworm-slim AS runner
+FROM node:22-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # @discordjs/voiceがIPv6優先の名前解決でDiscordのボイスサーバーに接続できずタイムアウトする
