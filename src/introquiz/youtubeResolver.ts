@@ -27,8 +27,15 @@ export function buildYtDlpArgs(youtubeUrl: string): string[] {
  * ffmpegにはローカルパイプ経由でのみデータを渡す。
  */
 export function createYoutubeAudioStream(youtubeUrl: string, guildId: string): Readable {
+  console.info(messages.introQuiz.ytdlpSpawnRequested(guildId));
   const child = spawn(YTDLP_PATH, buildYtDlpArgs(youtubeUrl), {
     stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  // spawn()呼び出しからOSが実際にプロセスを起動し終えるまでの遅延(Node/OS側のfork/exec遅延)と、
+  // プロセス起動後にyt-dlpが最初のログを出すまでの遅延(Python側の起動処理)を切り分けるための診断ログ
+  child.once("spawn", () => {
+    console.info(messages.introQuiz.ytdlpProcessSpawned(guildId));
   });
 
   let receivedData = false;

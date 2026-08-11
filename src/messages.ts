@@ -93,6 +93,10 @@ export const messages = {
       `[introquiz] ギルド(${guildId})のAudioPlayerでエラーが発生しました:`,
     audioPlayerStateChange: (guildId: string, oldStatus: string, newStatus: string) =>
       `[introquiz] ギルド(${guildId})のAudioPlayer状態変化: ${oldStatus} -> ${newStatus}`,
+    ytdlpSpawnRequested: (guildId: string) =>
+      `[introquiz] ギルド(${guildId}): yt-dlpのspawn()を呼び出しました`,
+    ytdlpProcessSpawned: (guildId: string) =>
+      `[introquiz] ギルド(${guildId}): yt-dlpプロセスの起動をOSが完了しました(spawnイベント)`,
     audioStreamFirstChunk: (guildId: string) =>
       `[introquiz] ギルド(${guildId}): yt-dlpから最初の音声データを受信しました`,
     audioStreamExitedEarly: (guildId: string, code: number | null) =>
