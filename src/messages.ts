@@ -79,6 +79,14 @@ export const messages = {
       `[introquiz] ギルド(${guildId})のVoiceConnection状態変化: ${oldStatus} -> ${newStatus}`,
     voiceConnectionDebug: (guildId: string, message: string) =>
       `[introquiz] ギルド(${guildId})のVoiceConnection debug: ${message}`,
+    voiceNetworkingStateChange: (guildId: string, oldCode: string, newCode: string) =>
+      `[introquiz] ギルド(${guildId})のNetworking状態変化: ${oldCode} -> ${newCode}`,
+    voiceNetworkingDebug: (guildId: string, message: string) =>
+      `[introquiz] ギルド(${guildId})のNetworking debug: ${message}`,
+    voiceNetworkingError: (guildId: string) =>
+      `[introquiz] ギルド(${guildId})のNetworkingでエラーが発生しました:`,
+    voiceNetworkingClosed: (guildId: string, code: number) =>
+      `[introquiz] ギルド(${guildId})のNetworkingが閉じました(code: ${code})`,
     voiceConnectionError: (guildId: string) =>
       `[introquiz] ギルド(${guildId})のVoiceConnectionでエラーが発生しました:`,
     threadCreateFailed: "スレッドの作成に失敗しました。",

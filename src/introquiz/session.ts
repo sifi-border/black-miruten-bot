@@ -47,6 +47,23 @@ interface StartSessionParams {
 
 const sessions = new Map<string, GameSession>();
 
+// @discordjs/voiceのNetworkingStatusCode enumは公開APIとしてexportされていないため、
+// 診断ログ表示用にローカルで名前対応表を持つ(OpeningWs=0, Identifying=1, UdpHandshaking=2,
+// SelectingProtocol=3, Ready=4, Resuming=5, Closed=6の順)
+const NETWORKING_STATUS_NAMES = [
+  "OpeningWs",
+  "Identifying",
+  "UdpHandshaking",
+  "SelectingProtocol",
+  "Ready",
+  "Resuming",
+  "Closed",
+] as const;
+
+function networkingStatusName(code: number): string {
+  return NETWORKING_STATUS_NAMES[code] ?? `unknown(${code})`;
+}
+
 const VOICE_READY_TIMEOUT_MS = 20_000;
 const VOICE_RECONNECT_TIMEOUT_MS = 5_000;
 const AUDIO_PLAYING_TIMEOUT_MS = 5_000;
@@ -68,11 +85,43 @@ export async function startSession(params: StartSessionParams): Promise<GameSess
     adapterCreator: params.voiceChannel.guild.voiceAdapterCreator,
   });
 
-  // Ready状態に到達しない場合の原因切り分け用(WebSocket/UDP経由のハンドシェイクがどこで止まっているか等)
+  // Ready状態に到達しない場合の原因切り分け用(WebSocket/UDP経由のハンドシェイクがどこで止まっているか等)。
+  // Networking(WebSocket/UDPの実際の通信を担う内部オブジェクト)のdebug/error/closeは
+  // VoiceConnection側には自動転送されないため、state.networkingに直接listenする必要がある
+  const attachedNetworkingInstances = new WeakSet<object>();
+
   voiceConnection.on("stateChange", (oldState, newState) => {
     console.info(
       messages.introQuiz.voiceConnectionStateChange(guildId, oldState.status, newState.status),
     );
+
+    if (
+      "networking" in newState &&
+      newState.networking &&
+      !attachedNetworkingInstances.has(newState.networking)
+    ) {
+      const networking = newState.networking;
+      attachedNetworkingInstances.add(networking);
+
+      networking.on("stateChange", (oldNetworkingState, newNetworkingState) => {
+        console.info(
+          messages.introQuiz.voiceNetworkingStateChange(
+            guildId,
+            networkingStatusName(oldNetworkingState.code),
+            networkingStatusName(newNetworkingState.code),
+          ),
+        );
+      });
+      networking.on("debug", (message) => {
+        console.debug(messages.introQuiz.voiceNetworkingDebug(guildId, message));
+      });
+      networking.on("error", (error) => {
+        console.error(messages.introQuiz.voiceNetworkingError(guildId), error);
+      });
+      networking.on("close", (code) => {
+        console.warn(messages.introQuiz.voiceNetworkingClosed(guildId, code));
+      });
+    }
   });
   voiceConnection.on("error", (error) => {
     console.error(messages.introQuiz.voiceConnectionError(guildId), error);
