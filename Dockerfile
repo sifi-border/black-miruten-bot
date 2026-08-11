@@ -13,6 +13,9 @@ RUN npm run typecheck && npm run lint && npm run format:check && npm test && npm
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+# @discordjs/voiceがIPv6優先の名前解決でDiscordのボイスサーバーに接続できずタイムアウトする
+# 既知の問題への対策(コンテナ環境でよく発生する)。IPv4を優先させる。
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
