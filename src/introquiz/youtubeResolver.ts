@@ -5,7 +5,18 @@ import { messages } from "../messages";
 const YTDLP_PATH = process.env.YTDLP_PATH ?? "yt-dlp";
 
 export function buildYtDlpArgs(youtubeUrl: string): string[] {
-  return ["--no-playlist", "-f", "bestaudio", "-o", "-", youtubeUrl];
+  return [
+    "--no-playlist",
+    "-f",
+    "bestaudio/best", // 音声専用ストリームが取れない場合のフォールバック(museを参考)
+    "-S",
+    "proto:https", // HLS/DASHマニフェスト形式より直接HTTPS配信を優先(マニフェスト取得の往復を避ける)
+    "--js-runtimes",
+    "node", // スタンドアロンバイナリでも動作確認済み。追加インストールなしでJS実行環境の警告を解消できる
+    "-o",
+    "-",
+    youtubeUrl,
+  ];
 }
 
 /**
