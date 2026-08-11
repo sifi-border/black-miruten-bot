@@ -32,6 +32,11 @@
 - `DISCORD_GUILD_ID` はカンマ区切りで複数ギルドIDを指定でき、それぞれに順番に登録する(未設定ならグローバル登録)。サーバーを追加するたびにIDを追記してJobを再実行する運用。
 - イントロクイズの問題データ(`src/introquiz/questionStore.ts`)はNorthflankの **MongoDB Addon** に保存する(永続ボリューム上のJSONファイルではない。Volumeは1インスタンスに固定されHAが効かない制約があり、Northflankも極力Addon利用を推奨しているため採用)。接続文字列は環境変数 `MONGODB_URI`。ローカル/バルクでの問題投入は `npm run seed-questions -- <questions.jsonのパス>`(`src/seedQuestions.ts`)を使うか、`mongosh`/MongoDB Compassで接続文字列に直接繋いで操作する。
 - **Node.jsは22系(`>=22.12.0`)が必須**(`Dockerfile`は`node:22-bookworm-slim`)。`@discordjs/voice`をDAVEプロトコル(DiscordのボイスチャンネルE2EE、2026年にDiscordが強制化)対応の`^0.19.x`系に上げた際に必要になった。`0.18.x`以下はDAVE未対応で、DAVE必須のチャンネルではボイス接続がVoice Gateway close code `4017`(E2EE/DAVE protocol required)で即座に切断される。この事象は`VoiceConnection`/`Networking`のstateChange/debug/closeイベントをログ出力してようやく特定できた(`src/introquiz/session.ts`)。
+- **YouTube音源の取得は`yt-dlp`(公式スタンドアロンLinuxバイナリ)を使う**(`src/introquiz/youtubeResolver.ts`)。以前は`play-dl`を使っていたが、`play-dl`は実質メンテナンス終了(2023年9月公開の`1.9.7`が最新かつ最終版)しており、YouTube側の仕様変更で`TypeError: Invalid URL`と共に壊れた。`yt-dlp`はPython製だが、Python不要のスタンドアロンバイナリが公式配布されているためこちらを`Dockerfile`の実行ステージで`ADD`により直接取得している(`youtube-dl-exec`はシステムPython必須、`yt-dlp-wrap`/`yt-dlp-exec`は非サポート/archivedのため、npmラッパーはいずれも不採用)。
+  - **`ffmpeg`(`ffmpeg-static`のバイナリ)にHTTPS URLを直接開かせるとこの環境ではセグフォルトする**(googlevideo.com固有ではなく、無関係な別のHTTPS URLでも即座に再現。`ffmpeg-static`のgnutlsリンクの問題と見られる、原因の完全特定はしていない)。そのため`yt-dlp`には単なるURL解決(`-g`)ではなく、`yt-dlp -f bestaudio -o - <url>`で音声データそのものをstdout経由でストリームさせ、`ffmpeg`にはそのローカルパイプ(`-i pipe:0`)経由でのみデータを渡す構成にしている(`createYoutubeAudioStream`が子プロセスのstdoutを返し、`audio.ts`側でffmpegの標準入力にpipeする)。`-ss`によるシークはこの非シーク可能なパイプ入力に対しては先頭からデコードして読み捨てる形になるため、`mode=random`で曲の後半にシークする場合はレイテンシが伸びる(既知のトレードオフ、`AUDIO_PLAYING_TIMEOUT_MS`で吸収)。
+  - `Dockerfile`の`YTDLP_VERSION`は固定バージョンで、`latest`は使わない(Dockerの`ADD <url>`はURL文字列でレイヤーキャッシュされるため、`latest`のままだと2回目以降のビルドで実際には更新されない)。イントロクイズの再生が抽出エラーで壊れたら、まずこのバージョンをyt-dlpの最新安定版(https://github.com/yt-dlp/yt-dlp/releases)に上げてみる。
+  - `yt-dlp`は`Dockerfile`の実行ステージにのみ同梱される(`ffmpeg-static`と違い、npm経由でどこでも自動的に使えるわけではない)。ローカルで`npm run dev`によりイントロクイズの音声再生を試す場合は、別途`yt-dlp`をローカルにインストールしPATHに通すか、環境変数`YTDLP_PATH`でバイナリの場所を指定する必要がある。
+  - `opusscript`は不要になり削除した。以前はPCMをJS側でOpusエンコードするために使っていたが、今は`ffmpeg`が`-acodec libopus`で直接Opusエンコードしたものを`StreamType.OggOpus`として渡しているため、`@discordjs/voice`側でのエンコードが発生しない。
 
 ## コーディング規約
 

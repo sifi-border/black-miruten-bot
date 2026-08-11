@@ -66,7 +66,9 @@ function networkingStatusName(code: number): string {
 
 const VOICE_READY_TIMEOUT_MS = 20_000;
 const VOICE_RECONNECT_TIMEOUT_MS = 5_000;
-const AUDIO_PLAYING_TIMEOUT_MS = 5_000;
+// yt-dlpのプロセス起動+URL解決のネットワーク往復がffmpeg起動より前に発生するため、
+// ffmpeg単体の起動レイテンシのみを見込んでいた頃より安全マージンを広めに取る
+const AUDIO_PLAYING_TIMEOUT_MS = 10_000;
 const NEXT_QUESTION_DELAY_MS = 3_000;
 
 export function getSession(guildId: string): GameSession | undefined {
@@ -140,6 +142,10 @@ export async function startSession(params: StartSessionParams): Promise<GameSess
 
   const audioPlayer = createAudioPlayer();
   voiceConnection.subscribe(audioPlayer);
+  // リスナー未設定だとストリームエラー(yt-dlp異常終了等)が未処理例外としてプロセスを落とすため必須
+  audioPlayer.on("error", (error) => {
+    console.error(messages.introQuiz.audioPlayerError(guildId), error);
+  });
 
   const session: GameSession = {
     guildId,

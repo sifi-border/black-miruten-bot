@@ -11,12 +11,13 @@ cp .env.example .env
 
 `.env` に以下を設定してください。
 
-| 変数名              | 必須 | 説明                                                                                                                                                                                      |
-| ------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                                                                                                |
-| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                                                                                           |
-| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録                                                                       |
-| `MONGODB_URI`       | ○\*  | イントロクイズの問題データを保存するMongoDBの接続文字列(`/introquiz`を使う場合は実質必須。ローカル開発ではDockerで一時的なMongoDBを立てるか、MongoDB Atlasの無料枠などを利用してください) |
+| 変数名              | 必須 | 説明                                                                                                                                                                                                                                    |
+| ------------------- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_TOKEN`     | ○    | BotのToken                                                                                                                                                                                                                              |
+| `DISCORD_CLIENT_ID` | ○    | アプリケーション(Client) ID。コマンド登録に使用                                                                                                                                                                                         |
+| `DISCORD_GUILD_ID`  | -    | 指定するとそのギルドのみにコマンドを登録(反映が速い)。複数ギルドはカンマ区切り(`111,222`)。未指定ならグローバル登録                                                                                                                     |
+| `MONGODB_URI`       | ○\*  | イントロクイズの問題データを保存するMongoDBの接続文字列(`/introquiz`を使う場合は実質必須。ローカル開発ではDockerで一時的なMongoDBを立てるか、MongoDB Atlasの無料枠などを利用してください)                                               |
+| `YTDLP_PATH`        | -    | `yt-dlp`実行ファイルのパス。未設定時は`yt-dlp`という名前でPATHから解決します。本番(Docker)イメージには同梱済みですが、`npm run dev`でローカル動作確認する場合は別途`yt-dlp`をインストールしてPATHに通すか、ここで場所を指定してください |
 
 ### Discord Developer Portalの設定(イントロクイズ機能を使う場合)
 
@@ -65,7 +66,7 @@ npm run format:check  # 整形が必要な箇所がないかCIなどで確認
 npm test  # Vitest (src/**/*.test.ts を実行)
 ```
 
-純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算など)や、リポジトリパターンで抽象化したロジック(`src/introquiz/questionStore.ts` のCRUD、`src/introquiz/questionRepository.ts` の `QuestionRepository` インターフェースをインメモリ実装に差し替えてテスト)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。MongoDBへの実接続を伴う挙動(接続文字列の解決、実際のクエリなど)はユニットテストの対象外です。
+純粋関数(`src/introquiz/judge.ts` の正誤判定ロジック、`src/introquiz/audio.ts` の再生位置計算、`src/introquiz/youtubeResolver.ts` のyt-dlp引数組み立てなど)や、リポジトリパターンで抽象化したロジック(`src/introquiz/questionStore.ts` のCRUD、`src/introquiz/questionRepository.ts` の `QuestionRepository` インターフェースをインメモリ実装に差し替えてテスト)を対象にVitestでテストしています。テストファイルは対象ファイルと同じディレクトリに `*.test.ts` として置きます。MongoDBへの実接続やyt-dlp/ffmpegの実プロセス起動を伴う挙動はユニットテストの対象外です。
 
 ## Dockerでの運用(推奨)
 
@@ -150,7 +151,8 @@ src/
   introquiz/
     session.ts             GameSessionの型・Map<guildId, GameSession>によるセッション管理・ゲームループ
     judge.ts                normalizeAnswer/isCorrectAnswer(回答判定の正規化ロジック、Discord非依存)
-    audio.ts                 YouTube音声取得(play-dl)・再生位置計算(resolvePlaybackStartSeconds)
+    audio.ts                 yt-dlpの音声ストリームをffmpegでOpusに変換して再生・再生位置計算(resolvePlaybackStartSeconds)
+    youtubeResolver.ts        yt-dlpを子プロセスとして実行し、YouTube動画の音声をstdout経由でストリーム
     scoreboard.ts             スコアボードEmbed生成
     questionStore.ts          問題データのCRUD(QuestionRepositoryを介した業務ロジック、現状Discordコマンドからは未使用)
     questionRepository.ts     QuestionRepositoryインターフェースとMongoDB実装(createMongoQuestionRepository)
