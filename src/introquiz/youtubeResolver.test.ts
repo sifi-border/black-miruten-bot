@@ -6,7 +6,11 @@ describe("buildYtDlpArgs", () => {
     expect(buildYtDlpArgs("https://www.youtube.com/watch?v=abc")).toEqual([
       "--no-playlist",
       "-f",
-      "bestaudio",
+      "bestaudio/best",
+      "-S",
+      "proto:https",
+      "--js-runtimes",
+      "node",
       "-o",
       "-",
       "https://www.youtube.com/watch?v=abc",
