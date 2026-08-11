@@ -68,6 +68,16 @@ export async function startSession(params: StartSessionParams): Promise<GameSess
     adapterCreator: params.voiceChannel.guild.voiceAdapterCreator,
   });
 
+  // Ready状態に到達しない場合の原因切り分け用(UDP経由のハンドシェイクがどこで止まっているか等)
+  voiceConnection.on("stateChange", (oldState, newState) => {
+    console.info(
+      messages.introQuiz.voiceConnectionStateChange(guildId, oldState.status, newState.status),
+    );
+  });
+  voiceConnection.on("error", (error) => {
+    console.error(messages.introQuiz.voiceConnectionError(guildId), error);
+  });
+
   try {
     await entersState(voiceConnection, VoiceConnectionStatus.Ready, VOICE_READY_TIMEOUT_MS);
   } catch (error) {
