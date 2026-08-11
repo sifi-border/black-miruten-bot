@@ -91,6 +91,14 @@ export const messages = {
       `[introquiz] ギルド(${guildId})のVoiceConnectionでエラーが発生しました:`,
     audioPlayerError: (guildId: string) =>
       `[introquiz] ギルド(${guildId})のAudioPlayerでエラーが発生しました:`,
+    audioPlayerStateChange: (guildId: string, oldStatus: string, newStatus: string) =>
+      `[introquiz] ギルド(${guildId})のAudioPlayer状態変化: ${oldStatus} -> ${newStatus}`,
+    audioStreamFirstChunk: (guildId: string) =>
+      `[introquiz] ギルド(${guildId}): yt-dlpから最初の音声データを受信しました`,
+    audioStreamExitedEarly: (guildId: string, code: number | null) =>
+      `[introquiz] ギルド(${guildId}): yt-dlpがデータ受信前に終了しました(code: ${code})`,
+    transcoderFirstChunk: (guildId: string) =>
+      `[introquiz] ギルド(${guildId}): ffmpegから最初のOpusデータを受信しました`,
     ytdlpBinaryNotFound:
       "yt-dlpの実行ファイルが見つかりません。YTDLP_PATH環境変数か、PATHにyt-dlpをインストールしてください。",
     ytdlpResolveFailed: (youtubeUrl: string) =>
