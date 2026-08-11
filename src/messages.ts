@@ -99,6 +99,8 @@ export const messages = {
       `[introquiz] ギルド(${guildId}): yt-dlpがデータ受信前に終了しました(code: ${code})`,
     transcoderFirstChunk: (guildId: string) =>
       `[introquiz] ギルド(${guildId}): ffmpegから最初のOpusデータを受信しました`,
+    ytdlpVerboseLog: (guildId: string, line: string) =>
+      `[introquiz] ギルド(${guildId}) yt-dlp -v: ${line}`,
     ytdlpBinaryNotFound:
       "yt-dlpの実行ファイルが見つかりません。YTDLP_PATH環境変数か、PATHにyt-dlpをインストールしてください。",
     ytdlpResolveFailed: (youtubeUrl: string) =>
