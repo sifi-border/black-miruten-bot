@@ -20,12 +20,21 @@ ENV NODE_OPTIONS=--dns-result-order=ipv4first
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-# yt-dlpの公式スタンドアロンLinuxバイナリ(Python不要)を取得する。バージョンは固定し、
-# 定期的に手動更新する(CLAUDE.md参照)。ADDのURLはビルド時ではなく初回フェッチ時にのみ
-# キャッシュされるため、"latest"ではなくタグを固定しないと更新が反映されない。
+# yt-dlpはスタンドアロンバイナリ(PyInstaller onefile)ではなくvenv経由でインストールする。
+# onefileバイナリは起動のたびに同梱Pythonランタイムを一時ディレクトリへ自己展開するオーバー
+# ヘッドがあり(本番で最初のデバッグ出力まで約9-10秒、ネットワークI/O開始前の純粋な起動コスト)、
+# これが解消対象。詳細はCLAUDE.md参照。build-essential等のネイティブビルドツールチェーンは
+# 不要(yt-dlp[default]の依存はすべてprebuilt wheelで揃う)。
+# venv作成・インストールはuv(高速なRust製パッケージマネージャ)を使う。uvはensurepip不要で
+# venvを作成できるため、python3-venv/python3-pipのapt依存が省ける(pipより高速でもある)。
+COPY --from=ghcr.io/astral-sh/uv:0.12.1 /uv /uvx /bin/
 ARG YTDLP_VERSION=2026.07.04
-ADD https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux /usr/local/bin/yt-dlp
-RUN chmod +x /usr/local/bin/yt-dlp
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python3 && \
+    rm -rf /var/lib/apt/lists/* && \
+    uv venv /opt/yt-dlp-venv && \
+    VIRTUAL_ENV=/opt/yt-dlp-venv uv pip install --no-cache "yt-dlp[default]==${YTDLP_VERSION}" && \
+    ln -s /opt/yt-dlp-venv/bin/yt-dlp /usr/local/bin/yt-dlp
 
 COPY --from=builder /app/dist ./dist
 COPY assets ./assets
