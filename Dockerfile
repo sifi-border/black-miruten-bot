@@ -20,6 +20,13 @@ ENV NODE_OPTIONS=--dns-result-order=ipv4first
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
+# yt-dlpの公式スタンドアロンLinuxバイナリ(Python不要)を取得する。バージョンは固定し、
+# 定期的に手動更新する(CLAUDE.md参照)。ADDのURLはビルド時ではなく初回フェッチ時にのみ
+# キャッシュされるため、"latest"ではなくタグを固定しないと更新が反映されない。
+ARG YTDLP_VERSION=2026.07.04
+ADD https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux /usr/local/bin/yt-dlp
+RUN chmod +x /usr/local/bin/yt-dlp
+
 COPY --from=builder /app/dist ./dist
 COPY assets ./assets
 

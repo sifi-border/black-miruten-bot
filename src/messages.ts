@@ -89,6 +89,12 @@ export const messages = {
       `[introquiz] ギルド(${guildId})のNetworkingが閉じました(code: ${code})`,
     voiceConnectionError: (guildId: string) =>
       `[introquiz] ギルド(${guildId})のVoiceConnectionでエラーが発生しました:`,
+    audioPlayerError: (guildId: string) =>
+      `[introquiz] ギルド(${guildId})のAudioPlayerでエラーが発生しました:`,
+    ytdlpBinaryNotFound:
+      "yt-dlpの実行ファイルが見つかりません。YTDLP_PATH環境変数か、PATHにyt-dlpをインストールしてください。",
+    ytdlpResolveFailed: (youtubeUrl: string) =>
+      `YouTube音源の取得に失敗しました(yt-dlp): ${youtubeUrl}`,
     threadCreateFailed: "スレッドの作成に失敗しました。",
     startedWithClampedCount: (count: number) =>
       `登録されている問題数の都合上、${count}問で開始します。`,
