@@ -1,5 +1,6 @@
 import { createAudioResource, StreamType, type AudioResource } from "@discordjs/voice";
 import { FFmpeg } from "prism-media";
+import { messages } from "../messages";
 import type { QuizQuestion } from "./questionStore";
 import { createYoutubeAudioStream } from "./youtubeResolver";
 
@@ -28,8 +29,9 @@ export function resolvePlaybackStartSeconds(
 export async function createYoutubeAudioResource(
   question: QuizQuestion,
   startSeconds: number,
+  guildId: string,
 ): Promise<AudioResource> {
-  const youtubeStream = createYoutubeAudioStream(question.youtubeUrl);
+  const youtubeStream = createYoutubeAudioStream(question.youtubeUrl, guildId);
 
   // ffmpegにHTTPS URLを直接開かせるとこの環境ではセグフォルトするため、
   // 標準入力(ローカルパイプ)経由でのみデータを渡す。-ssは非シーク可能な
@@ -53,6 +55,10 @@ export async function createYoutubeAudioResource(
       "-ac",
       "2",
     ],
+  });
+
+  transcoder.once("data", () => {
+    console.info(messages.introQuiz.transcoderFirstChunk(guildId));
   });
 
   // pipe()はソース側の'error'を自動転送しないため、明示的に転送する

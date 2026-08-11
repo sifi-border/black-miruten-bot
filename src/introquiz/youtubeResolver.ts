@@ -14,9 +14,15 @@ export function buildYtDlpArgs(youtubeUrl: string): string[] {
  * (ffmpeg-staticのgnutlsリンクの問題と見られる)、HTTPS取得はyt-dlpに任せ、
  * ffmpegにはローカルパイプ経由でのみデータを渡す。
  */
-export function createYoutubeAudioStream(youtubeUrl: string): Readable {
+export function createYoutubeAudioStream(youtubeUrl: string, guildId: string): Readable {
   const child = spawn(YTDLP_PATH, buildYtDlpArgs(youtubeUrl), {
     stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let receivedData = false;
+  child.stdout.once("data", () => {
+    receivedData = true;
+    console.info(messages.introQuiz.audioStreamFirstChunk(guildId));
   });
 
   let stderrOutput = "";
@@ -33,6 +39,9 @@ export function createYoutubeAudioStream(youtubeUrl: string): Readable {
   });
 
   child.on("exit", (code) => {
+    if (!receivedData) {
+      console.warn(messages.introQuiz.audioStreamExitedEarly(guildId, code));
+    }
     if (code !== 0 && code !== null) {
       child.stdout.destroy(
         new Error(messages.introQuiz.ytdlpResolveFailed(youtubeUrl), {
