@@ -6,6 +6,7 @@ const YTDLP_PATH = process.env.YTDLP_PATH ?? "yt-dlp";
 
 export function buildYtDlpArgs(youtubeUrl: string): string[] {
   return [
+    "-v", // 抽出フェーズのどこで時間がかかっているか本番ログから追えるようにする(診断目的)
     "--no-playlist",
     "-f",
     "bestaudio/best", // 音声専用ストリームが取れない場合のフォールバック(museを参考)
@@ -37,8 +38,22 @@ export function createYoutubeAudioStream(youtubeUrl: string, guildId: string): R
   });
 
   let stderrOutput = "";
+  let stderrLineBuffer = "";
   child.stderr.on("data", (chunk: Buffer) => {
-    stderrOutput += chunk.toString();
+    const text = chunk.toString();
+    stderrOutput += text;
+
+    // -vの詳細ログを1行ずつログ出力する(各行にプラットフォーム側のタイムスタンプが付くため、
+    // 抽出フェーズのどの段階で時間がかかっているか本番ログから追える)。
+    // ダウンロード進捗行は\rのみで区切られ\nが来ないため、\rも改行として扱う
+    stderrLineBuffer += text.replace(/\r/g, "\n");
+    const lines = stderrLineBuffer.split("\n");
+    stderrLineBuffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (line.trim().length > 0) {
+        console.info(messages.introQuiz.ytdlpVerboseLog(guildId, line.trim()));
+      }
+    }
   });
 
   child.on("error", (error) => {
