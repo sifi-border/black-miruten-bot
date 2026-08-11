@@ -8,7 +8,7 @@
 - この開発環境にはNode.js/npmがローカルインストールされていない。`typecheck` / `lint` / `format` / `build` / 動作確認はすべてDocker経由で行う。
 
   ```bash
-  docker run --rm -v "$(pwd)":/app -w /app node:20-bookworm \
+  docker run --rm -v "$(pwd)":/app -w /app node:22-bookworm \
     bash -lc "npm install && npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
   ```
 
@@ -31,6 +31,7 @@
 - コマンド登録(`src/deploy-commands.ts` → `npm run deploy-commands` / `node dist/deploy-commands.js`)はbot本体の起動から独立したスクリプト。Northflank上では別の「Job」として手動トリガーする運用(常時稼働中のBotを再起動せずにコマンド定義を反映するため)。
 - `DISCORD_GUILD_ID` はカンマ区切りで複数ギルドIDを指定でき、それぞれに順番に登録する(未設定ならグローバル登録)。サーバーを追加するたびにIDを追記してJobを再実行する運用。
 - イントロクイズの問題データ(`src/introquiz/questionStore.ts`)はNorthflankの **MongoDB Addon** に保存する(永続ボリューム上のJSONファイルではない。Volumeは1インスタンスに固定されHAが効かない制約があり、Northflankも極力Addon利用を推奨しているため採用)。接続文字列は環境変数 `MONGODB_URI`。ローカル/バルクでの問題投入は `npm run seed-questions -- <questions.jsonのパス>`(`src/seedQuestions.ts`)を使うか、`mongosh`/MongoDB Compassで接続文字列に直接繋いで操作する。
+- **Node.jsは22系(`>=22.12.0`)が必須**(`Dockerfile`は`node:22-bookworm-slim`)。`@discordjs/voice`をDAVEプロトコル(DiscordのボイスチャンネルE2EE、2026年にDiscordが強制化)対応の`^0.19.x`系に上げた際に必要になった。`0.18.x`以下はDAVE未対応で、DAVE必須のチャンネルではボイス接続がVoice Gateway close code `4017`(E2EE/DAVE protocol required)で即座に切断される。この事象は`VoiceConnection`/`Networking`のstateChange/debug/closeイベントをログ出力してようやく特定できた(`src/introquiz/session.ts`)。
 
 ## コーディング規約
 
